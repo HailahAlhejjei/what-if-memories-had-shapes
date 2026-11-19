@@ -288,3 +288,17 @@ input[type='range'] { width: 100%; accent-color: var(--rose); height: 28px; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   .atmos-motes { display: none; }
 }
+
+/* ---------- Painting ---------- */
+.gallery { position: absolute; inset: 0; display: grid; place-items: center; padding: 120px 16px 80px; }
+.artwork { margin: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 22px; max-width: 100%; }
+.frame { position: relative; padding: 14px; background: #1f1c20; box-shadow: 0 30px 80px rgba(0,0,0,0.45), 0 2px 0 rgba(255,255,255,0.05) inset; }
+.frame-watercolor { padding: clamp(18px, 3vw, 34px); background: #F4EFE6; box-shadow: 0 0 0 10px #2a2629, 0 30px 80px rgba(0,0,0,0.45); }
+.frame-ink { padding: clamp(18px, 3vw, 34px); background: #EDE6D9; box-shadow: 0 0 0 6px #191719, 0 30px 80px rgba(0,0,0,0.45); }
+.frame-oil { padding: 12px; background: linear-gradient(135deg, #6b5338, #3a2c20 60%, #5a4530); }
+.frame canvas { display: block; max-width: 100%; transition: opacity 0.9s var(--ease); }
+.painting-wait { position: absolute; inset: 0; display: grid; place-items: center; color: #8a8380; }
+.plaque { display: flex; flex-direction: column; gap: 4px; max-width: 360px; }
+.plaque-title { font-size: 20px; font-style: italic; }
+.plaque-note { font-size: 12px; color: var(--ink-faint); }
+@media (max-width: 760px) { .gallery { padding: 170px 16px 80px; place-items: start center; } }

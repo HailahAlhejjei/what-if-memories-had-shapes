@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { Intro } from './ui/Intro';
 import { MemoryForm } from './ui/MemoryForm';
@@ -19,18 +19,14 @@ export interface InterpretOptions { useLLM: boolean; apiKey: string }
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export default function App() {
-  const [stage, setStage] = useState<Stage>('intro');
-  const [input, setInput] = useState<MemoryInput>(EMPTY_INPUT);
-  const [profile, setProfile] = useState<MemoryProfile | null>(null);
+  // A shared link opens straight into the result, decided before the first render.
+  const sharedProfile = useRef(readSharedFromHash()).current;
+  const [stage, setStage] = useState<Stage>(sharedProfile ? 'result' : 'intro');
+  const [input, setInput] = useState<MemoryInput>(sharedProfile?.input ?? EMPTY_INPUT);
+  const [profile, setProfile] = useState<MemoryProfile | null>(sharedProfile);
   const [notice, setNotice] = useState<string | null>(null);
-  const [shared, setShared] = useState(false);
+  const [shared, setShared] = useState(!!sharedProfile);
   const reduced = useRef(prefersReducedMotion()).current;
-
-  // Open a shared link directly in the result view.
-  useEffect(() => {
-    const p = readSharedFromHash();
-    if (p) { setProfile(p); setInput(p.input); setShared(true); setStage('result'); }
-  }, []);
 
   async function interpret(next: MemoryInput, opts: InterpretOptions) {
     setInput(next);
@@ -75,7 +71,7 @@ export default function App() {
           {stage === 'form' && <MemoryForm initial={input} onSubmit={interpret} onBack={() => setStage('intro')} />}
           {stage === 'interpreting' && <Loading />}
           {stage === 'interpretation' && profile && (
-            <Interpretation profile={profile} notice={notice} onGenerate={() => setStage('result')} onEdit={() => setStage('form')} />
+            <Interpretation profile={profile} notice={notice} onGenerate={(m) => { setProfile({ ...profile, mode: { ...profile.mode, value: m } }); setStage('result'); }} onEdit={() => setStage('form')} />
           )}
           {stage === 'result' && profile && (
             <Result profile={profile} shared={shared} onEdit={() => { setShared(false); setStage('form'); }} onNew={startOver}

@@ -5,6 +5,7 @@ An experimental art website. A visitor describes a memory; the site interprets i
 
 - **The World**: an explorable environment (room, kitchen, corridor, street, garden, field, forest, beach, or void).
 - **The Object**: an abstract sculpture (translucent layers, floating fragments, or woven threads).
+- **The Painting**: an abstract generative painting in watercolour, oil or ink. It takes in the memory's colours, light, weather and objects (as motifs), and leaves forgotten details as pale, unpainted areas.
 
 The result is an artistic interpretation, not a reconstruction. The interface always separates what came
 from the visitor's words from what the system imagined.
@@ -47,6 +48,12 @@ unclear fragments, the suggested mode, the sculpture variant, and a seed so resu
 - `object/ObjectScene.tsx`: a noise-displaced GLSL core with fresnel/iridescence, plus three variants and four materials (glass, pearl, clay, chrome).
 - `MemoryCanvas.tsx`: canvas, cinematic camera intro, orbit/zoom/pan, WASD walking, local Lightformer reflections (no HDR downloads), and PNG capture.
 
+### Painting (`src/painting/`)
+`paint.ts` draws on a 2D canvas: layered, deformed translucent washes (sky, horizon, earth), a bloom for the time of day,
+mood colour fields, object motifs (glows, tall forms, frames, low masses, pebbles), flow-field brushwork whose turbulence
+follows the mood, painted weather, erased patches for forgotten details, and paper or canvas texture.
+`MemoryPainting.tsx` hangs the painting on a gallery wall with a small label. **Repaint** makes a new composition from the same memory.
+
 ### Sound (`src/audio/ambient.ts`)
 Fully synthesized with the Web Audio API: rain, wind, waves, birds, traffic, insects, room hum, a ticking
 clock, faint music and murmured voices over a mood chord pad. It is off until the visitor turns it on.
@@ -72,7 +79,7 @@ clock, faint music and murmured voices over a mood chord pad. It is off until th
 The build is a static site (`base: './'`), so it works from any path.
 
 - **Netlify / Vercel / Cloudflare Pages**: build command `npm run build`, output directory `dist`.
-- **GitHub Pages**: run `npm run build` and publish `dist/` (for example with `actions/deploy-pages`).
+- **GitHub Pages** (how this repo is deployed): run `npm run build` and push `dist/` to the `gh-pages` branch.
 - No server or environment variables are needed.
 
 ## Testing notes

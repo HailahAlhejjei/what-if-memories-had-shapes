@@ -1,4 +1,4 @@
-import type { MemoryProfile, Sourced } from '../memory/types';
+import type { MemoryProfile, Sourced, VisualMode } from '../memory/types';
 
 const SOUND_NAMES: Record<string, string> = {
   rain: 'Rain', wind: 'Wind', waves: 'Waves', birds: 'Birdsong', city: 'Distant traffic', crickets: 'Insects at night',
@@ -23,7 +23,7 @@ export function splitProfile(p: MemoryProfile) {
   p.sounds.forEach((s) => put(s, row('Sound', s, (v) => SOUND_NAMES[v] ?? v)));
   p.unclear.forEach((u) => mine.push({ label: 'Forgotten', value: u, detail: 'shown as frosted, unreadable glass' }));
   ours.push({ label: 'Palette', value: p.palette.name, detail: p.palette.reason });
-  ours.push({ label: 'Form', value: p.mode.value === 'world' ? 'A world to walk through' : 'An object to hold', detail: p.mode.reason });
+  ours.push({ label: 'Form', value: p.mode.value === 'world' ? 'A world to walk through' : p.mode.value === 'painting' ? 'A painting to look at' : 'An object to hold', detail: p.mode.reason });
   ours.push({ label: 'Tone', value: p.emotionalTone });
   return { mine, ours };
 }
@@ -45,7 +45,7 @@ export function Breakdown({ profile, compact = false }: { profile: MemoryProfile
   );
 }
 
-export function Interpretation({ profile, notice, onGenerate, onEdit }: { profile: MemoryProfile; notice: string | null; onGenerate: () => void; onEdit: () => void }) {
+export function Interpretation({ profile, notice, onGenerate, onEdit }: { profile: MemoryProfile; notice: string | null; onGenerate: (mode: VisualMode) => void; onEdit: () => void }) {
   const c = profile.palette.colors;
   return (
     <section className="interpretation">
@@ -65,7 +65,8 @@ export function Interpretation({ profile, notice, onGenerate, onEdit }: { profil
       </p>
       <div className="form-actions">
         <button className="btn btn-quiet" onClick={onEdit}>Change the description</button>
-        <button className="btn btn-primary" onClick={onGenerate}>
+        <button className="btn btn-quiet" onClick={() => onGenerate('painting')}>Paint it</button>
+        <button className="btn btn-primary" onClick={() => onGenerate(profile.mode.value === 'painting' ? 'object' : profile.mode.value)}>
           Give it form · {profile.mode.value === 'world' ? 'The World' : 'The Object'}
         </button>
       </div>

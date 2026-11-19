@@ -8,6 +8,10 @@ import { detectQuality, prefersReducedMotion, type Quality } from '../lib/capabi
 import { saveMemory } from '../lib/storage';
 import { makeShareUrl } from '../lib/share';
 import { ambient } from '../audio/ambient';
+import { MemoryPainting } from '../painting/MemoryPainting';
+import type { PaintStyle } from '../painting/paint';
+
+const MODE_NAME: Record<VisualMode, string> = { world: 'The World', object: 'The Object', painting: 'The Painting' };
 
 const MemoryCanvas = lazy(() => import('../scene/MemoryCanvas').then((m) => ({ default: m.MemoryCanvas })));
 
@@ -36,6 +40,8 @@ export function Result({ profile, shared, onEdit, onNew, onUpdate }: { profile: 
   const [mode, setMode] = useState<VisualMode>(profile.mode.value);
   const [variant, setVariant] = useState<SculptureVariant>(profile.variant);
   const [material, setMaterial] = useState<MaterialStyle>('glass');
+  const [paintStyle, setPaintStyle] = useState<PaintStyle>(() => (profile.mood.value === 'uncertain' || profile.mood.value === 'strange' ? 'ink' : profile.mood.value === 'joyful' ? 'oil' : 'watercolor'));
+  const [paintVariation, setPaintVariation] = useState(0);
   const [light, setLight] = useState(1);
   const [panelOpen, setPanelOpen] = useState(() => window.innerWidth > 760);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -97,7 +103,9 @@ export function Result({ profile, shared, onEdit, onNew, onUpdate }: { profile: 
   return (
     <section className="result">
       <div className="canvas-wrap">
-        {quality === 'none' ? <Poster profile={profile} /> : (
+        {mode === 'painting' ? (
+          <MemoryPainting ref={canvas} profile={profile} style={paintStyle} variation={paintVariation} light={light} />
+        ) : quality === 'none' ? <Poster profile={profile} /> : (
           <CanvasBoundary fallback={<Poster profile={profile} />}>
             <Suspense fallback={<div className="canvas-loading"><span className="meta">Building the scene…</span></div>}>
               <MemoryCanvas ref={canvas} profile={profile} mode={mode} variant={variant} material={material}
@@ -110,7 +118,7 @@ export function Result({ profile, shared, onEdit, onNew, onUpdate }: { profile: 
 
       <header className="result-top">
         <div>
-          <p className="meta">{mode === 'world' ? 'The World' : 'The Object'} · {profile.palette.name}{shared ? ' · shared with you' : ''}</p>
+          <p className="meta">{MODE_NAME[mode]} · {profile.palette.name}{shared ? ' · shared with you' : ''}</p>
           <h1 className="serif">{profile.title}</h1>
         </div>
         <nav className="result-nav">
@@ -121,7 +129,7 @@ export function Result({ profile, shared, onEdit, onNew, onUpdate }: { profile: 
       </header>
 
       <p className="hint-bar meta" aria-hidden="true">
-        {mode === 'world' ? 'Drag to look · scroll / pinch to move closer · WASD to walk · click things' : 'Drag to turn · scroll / pinch to zoom · click fragments'}
+        {mode === 'world' ? 'Drag to look · scroll / pinch to move closer · WASD to walk · click things' : mode === 'painting' ? 'Change the medium or repaint it in the controls' : 'Drag to turn · scroll / pinch to zoom · click fragments'}
       </p>
 
       <AnimatePresence>
@@ -147,8 +155,18 @@ export function Result({ profile, shared, onEdit, onNew, onUpdate }: { profile: 
               <div className="seg">
                 <button className={mode === 'world' ? 'on' : ''} onClick={() => setMode('world')}>World</button>
                 <button className={mode === 'object' ? 'on' : ''} onClick={() => setMode('object')}>Object</button>
+                <button className={mode === 'painting' ? 'on' : ''} onClick={() => setMode('painting')}>Painting</button>
               </div>
             </div>
+            {mode === 'painting' && (
+              <div className="ctl">
+                <p className="meta">Medium</p>
+                <div className="seg">
+                  {(['watercolor', 'oil', 'ink'] as PaintStyle[]).map((s) => <button key={s} className={paintStyle === s ? 'on' : ''} onClick={() => setPaintStyle(s)}>{s === 'watercolor' ? 'Watercolour' : s}</button>)}
+                </div>
+                <button className="btn btn-small" onClick={() => setPaintVariation((v) => v + 1)}>Repaint</button>
+              </div>
+            )}
             {mode === 'object' && (
               <>
                 <div className="ctl">
@@ -177,7 +195,7 @@ export function Result({ profile, shared, onEdit, onNew, onUpdate }: { profile: 
                   onChange={(e) => { setVolume(+e.target.value); ambient.setVolume(+e.target.value); }} />
               </div>
             </div>
-            {quality !== 'none' && (
+            {quality !== 'none' && mode !== 'painting' && (
               <div className="ctl">
                 <p className="meta">Detail</p>
                 <div className="seg">
@@ -187,9 +205,9 @@ export function Result({ profile, shared, onEdit, onNew, onUpdate }: { profile: 
               </div>
             )}
             <div className="ctl actions">
-              <button className="btn btn-small" onClick={() => setResetKey((k) => k + 1)}>Reset view</button>
+              {mode !== 'painting' && <button className="btn btn-small" onClick={() => setResetKey((k) => k + 1)}>Reset view</button>}
               <button className="btn btn-small" onClick={save}>Save</button>
-              <button className="btn btn-small" onClick={exportImage} disabled={quality === 'none'}>Export image</button>
+              <button className="btn btn-small" onClick={exportImage} disabled={quality === 'none' && mode !== 'painting'}>Export image</button>
               <button className="btn btn-small" onClick={() => setShareOpen(true)}>Share</button>
             </div>
             <p className="meta panel-foot">Press H to hide</p>

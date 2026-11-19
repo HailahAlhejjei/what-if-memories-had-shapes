@@ -44,7 +44,7 @@ export interface MemoryInput {
   mood: Mood | null;
 }
 
-export type VisualMode = 'world' | 'object';
+export type VisualMode = 'world' | 'object' | 'painting';
 export type SculptureVariant = 'glass' | 'fragments' | 'threads';
 
 export interface MemoryObject extends Sourced<ObjectKind> {
