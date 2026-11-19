@@ -302,3 +302,14 @@ input[type='range'] { width: 100%; accent-color: var(--rose); height: 28px; }
 .plaque-title { font-size: 20px; font-style: italic; }
 .plaque-note { font-size: 12px; color: var(--ink-faint); }
 @media (max-width: 760px) { .gallery { padding: 170px 16px 80px; place-items: start center; } }
+
+/* Multi-mood + Other */
+.mood { position: relative; }
+.mood-order { position: absolute; top: 14px; right: 16px; color: var(--ink-soft); }
+.mood-other { cursor: text; grid-column: span 3; flex-direction: row; align-items: center; gap: 14px; }
+.mood-other .mood-orb { margin: 0; flex: none; background: conic-gradient(from 90deg, #C99A9D, #D6A66A, #8DA8B9, #6E5F86, #C99A9D); filter: blur(1px); }
+.mood-other .mood-name { flex: none; }
+.mood-other input { flex: 1; min-width: 0; background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 6px 0; font-family: var(--serif); font-size: 20px; font-style: italic; }
+.mood-other input:focus { outline: none; border-color: var(--ivory); }
+.mood-note { margin-top: 4px; }
+@media (max-width: 760px) { .mood-other { grid-column: span 2; } }

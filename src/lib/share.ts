@@ -21,7 +21,8 @@ export function makeShareUrl(p: MemoryProfile, includeWords: boolean): string {
     data = {
       ...p,
       title: 'A shared memory',
-      input: { ...EMPTY_INPUT, mood: p.input.mood },
+      input: { ...EMPTY_INPUT, mood: p.input.mood, moods: p.input.moods ?? [] },
+      moodWords: undefined,
       environment: strip(p.environment), time: strip(p.time), weather: strip(p.weather), mood: strip(p.mood),
       objects: p.objects.map((o) => ({ ...strip(o), note: o.source === 'visitor' ? 'From the original description (kept private).' : o.note })),
       sounds: p.sounds.map(strip),

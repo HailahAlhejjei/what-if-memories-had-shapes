@@ -41,7 +41,12 @@ export interface MemoryInput {
   sounds: string;
   feeling: string;
   unclear: string;
+  /** The first chosen mood (kept for older saved memories). */
   mood: Mood | null;
+  /** Every mood chosen, in the order picked. */
+  moods?: Mood[];
+  /** The visitor's own word for the feeling, when none of the moods fit. */
+  moodOther?: string;
 }
 
 export type VisualMode = 'world' | 'object' | 'painting';
@@ -62,6 +67,10 @@ export interface MemoryProfile {
   time: Sourced<TimeOfDay>;
   weather: Sourced<Weather>;
   mood: Sourced<Mood>;
+  /** Further moods the visitor chose alongside the main one. */
+  secondaryMoods?: Mood[];
+  /** The visitor's own word(s) for the feeling. */
+  moodWords?: string;
   palette: { name: string; colors: string[]; source: Source; reason: string };
   objects: MemoryObject[];
   sounds: Sourced<SoundKind>[];
@@ -85,5 +94,5 @@ export interface MemoryProfile {
 }
 
 export const EMPTY_INPUT: MemoryInput = {
-  what: '', where: '', when: '', seeing: '', sounds: '', feeling: '', unclear: '', mood: null,
+  what: '', where: '', when: '', seeing: '', sounds: '', feeling: '', unclear: '', mood: null, moods: [], moodOther: '',
 };

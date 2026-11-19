@@ -19,6 +19,8 @@ export function splitProfile(p: MemoryProfile) {
   put(p.time, row('Light', p.time));
   put(p.weather, row('Weather', p.weather));
   put(p.mood, row('Mood', p.mood));
+  (p.secondaryMoods ?? []).forEach((m) => mine.push({ label: 'Also', value: m, detail: 'a second weather, tinting the colours' }));
+  if (p.moodWords) mine.push({ label: 'In your word', value: p.moodWords, detail: 'how you named the feeling' });
   p.objects.forEach((o) => put(o, { label: 'Object', value: o.label, detail: o.source === 'visitor' ? (o.evidence ? `from “${o.evidence}”` : undefined) : o.reason }));
   p.sounds.forEach((s) => put(s, row('Sound', s, (v) => SOUND_NAMES[v] ?? v)));
   p.unclear.forEach((u) => mine.push({ label: 'Forgotten', value: u, detail: 'shown as frosted, unreadable glass' }));

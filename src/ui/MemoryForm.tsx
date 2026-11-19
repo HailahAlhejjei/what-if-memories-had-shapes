@@ -5,7 +5,7 @@ import { getApiKey, setApiKey } from '../lib/storage';
 import { LLM_MODEL } from '../memory/llm';
 import type { InterpretOptions } from '../App';
 
-type Field = Exclude<keyof MemoryInput, 'mood'>;
+type Field = Exclude<keyof MemoryInput, 'mood' | 'moods' | 'moodOther'>;
 
 const QUESTIONS: { key: Field; q: string; hint: string; placeholder: string }[] = [
   { key: 'what', q: 'What happened?', hint: 'Start anywhere. A sentence is enough.', placeholder: 'We stayed up late on the roof, waiting for the power to come back…' },
@@ -40,6 +40,13 @@ export function MemoryForm({ initial, onSubmit, onBack }: { initial: MemoryInput
     if (useLLM && canLLM) setApiKey(key.trim());
     onSubmit(data, { useLLM: canLLM, apiKey: key.trim() });
   }
+
+  const chosen = data.moods ?? (data.mood ? [data.mood] : []);
+  function toggleMood(m: Mood) {
+    const moods = chosen.includes(m) ? chosen.filter((x) => x !== m) : [...chosen, m];
+    setData({ ...data, moods, mood: moods[0] ?? null });
+  }
+  const moodSummary = [...chosen, ...(data.moodOther?.trim() ? [data.moodOther.trim()] : [])].map((m) => `“${m}”`).join(', ');
 
   const q = QUESTIONS[step];
 
@@ -78,19 +85,30 @@ export function MemoryForm({ initial, onSubmit, onBack }: { initial: MemoryInput
           {step === QUESTIONS.length && (
             <>
               <p className="q serif" id="mood-label">If it had a weather of its own…</p>
-              <p className="hint">Choose a mood, or leave it to the interpretation.</p>
-              <div className="moods" role="radiogroup" aria-labelledby="mood-label">
-                {MOODS.map((m) => (
-                  <button key={m} role="radio" aria-checked={data.mood === m} className={`mood mood-${m} ${data.mood === m ? 'on' : ''}`}
-                    onClick={() => setData({ ...data, mood: data.mood === m ? null : m })}>
-                    <span className="mood-orb" aria-hidden="true" />
-                    <span className="mood-name serif">{m}</span>
-                    <span className="meta">{MOOD_NOTES[m]}</span>
-                  </button>
-                ))}
+              <p className="hint">Choose as many as it held, write your own, or leave it to the interpretation.</p>
+              <div className="moods" role="group" aria-labelledby="mood-label">
+                {MOODS.map((m) => {
+                  const on = chosen.includes(m);
+                  return (
+                    <button key={m} aria-pressed={on} className={`mood mood-${m} ${on ? 'on' : ''}`} onClick={() => toggleMood(m)}>
+                      <span className="mood-orb" aria-hidden="true" />
+                      <span className="mood-name serif">{m}</span>
+                      <span className="meta">{MOOD_NOTES[m]}</span>
+                      {on && chosen.length > 1 && <span className="mood-order meta" aria-hidden="true">{chosen.indexOf(m) + 1}</span>}
+                    </button>
+                  );
+                })}
+                <label className={`mood mood-other ${data.moodOther?.trim() ? 'on' : ''}`}>
+                  <span className="mood-orb" aria-hidden="true" />
+                  <span className="mood-name serif">Other</span>
+                  <input type="text" maxLength={60} value={data.moodOther ?? ''} placeholder="In your own words…"
+                    aria-label="Another mood, in your own words"
+                    onChange={(e) => setData({ ...data, moodOther: e.target.value })} />
+                </label>
               </div>
+              {chosen.length > 1 && <p className="meta mood-note">The first one leads; the others tint it.</p>}
               <div className="form-actions">
-                <button className="btn btn-quiet" onClick={() => { setData({ ...data, mood: null }); next(); }}>Skip</button>
+                <button className="btn btn-quiet" onClick={() => { setData({ ...data, mood: null, moods: [], moodOther: '' }); next(); }}>Skip</button>
                 <button className="btn btn-primary" onClick={next}>Continue</button>
               </div>
             </>
@@ -100,9 +118,9 @@ export function MemoryForm({ initial, onSubmit, onBack }: { initial: MemoryInput
             <>
               <p className="q serif">Ready to give it a shape?</p>
               <p className="hint">
-                {answered === 0 && !data.mood
+                {answered === 0 && !chosen.length && !data.moodOther?.trim()
                   ? 'You left everything open. The shape will be almost entirely imagined, which is its own kind of memory.'
-                  : `You answered ${answered} of ${QUESTIONS.length} questions${data.mood ? ` and chose “${data.mood}”` : ''}. Anything you skipped will be filled in by interpretation, and marked as such.`}
+                  : `You answered ${answered} of ${QUESTIONS.length} questions${moodSummary ? ` and chose ${moodSummary}` : ''}. Anything you skipped will be filled in by interpretation, and marked as such.`}
               </p>
 
               <fieldset className="interp">

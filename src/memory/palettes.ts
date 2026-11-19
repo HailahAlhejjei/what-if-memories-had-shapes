@@ -48,6 +48,11 @@ export function choosePalette(mood: Mood, time: TimeOfDay, weather: Weather, chi
   return { ...base, reason };
 }
 
+/** Tints a palette with the colours of further moods. */
+export function blendMoods(colors: string[], extra: Mood[]): string[] {
+  return extra.reduce((acc, m, i) => acc.map((c, k) => mix(c, MOOD_PALETTES[m].colors[k], i === 0 ? 0.3 : 0.18)), colors);
+}
+
 function blend(a: Palette, b: Palette, t: number, name: string): Palette {
   return { name, colors: a.colors.map((c, i) => mix(c, b.colors[i], t)) };
 }

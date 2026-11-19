@@ -1,7 +1,7 @@
 // Local, offline interpreter: turns free text into a MemoryProfile using a small lexicon.
 // No network. Deterministic for the same input (seeded).
 
-import { choosePalette } from './palettes';
+import { blendMoods, choosePalette } from './palettes';
 import type {
   Environment, MemoryInput, MemoryObject, MemoryProfile, Mood, ObjectKind, SculptureVariant,
   SoundKind, Sourced, TimeOfDay, VisualMode, Weather,
@@ -39,7 +39,7 @@ const WEATHER_WORDS: Lexicon<Weather> = {
 };
 
 const MOOD_WORDS: Lexicon<Mood> = {
-  nostalgic: ['nostalg', 'miss', 'used to', 'long ago', 'remember', 'childhood', 'old', 'faded', 'grandm', 'grandf'],
+  nostalgic: ['nostalg', 'homesick', 'longing', 'miss', 'used to', 'long ago', 'remember', 'childhood', 'old', 'faded', 'grandm', 'grandf'],
   peaceful: ['peace', 'calm', 'quiet', 'safe', 'still', 'gentle', 'warm', 'cozy', 'cosy', 'rest', 'soft'],
   strange: ['strange', 'weird', 'odd', 'surreal', 'unreal', 'dream', 'eerie', 'impossible'],
   joyful: ['happy', 'joy', 'laugh', 'fun', 'excited', 'celebrat', 'birthday', 'wedding', 'play', 'love', 'bright'],
@@ -219,13 +219,20 @@ export function interpretLocally(input: MemoryInput): MemoryProfile {
 
   // Mood
   const moodHit = best(feeling, MOOD_WORDS);
-  const mood: Sourced<Mood> = input.mood
-    ? { value: input.mood, source: 'visitor', evidence: 'chosen in the mood picker' }
+  const chosen: Mood[] = input.moods?.length ? input.moods : input.mood ? [input.mood] : [];
+  const other = (input.moodOther ?? '').trim();
+  const otherHit = other ? best(norm(other), MOOD_WORDS) : null;
+  const mood: Sourced<Mood> = chosen.length
+    ? { value: chosen[0], source: 'visitor', evidence: chosen.length > 1 ? `chosen in the mood picker, with ${chosen.slice(1).join(', ')}` : 'chosen in the mood picker' }
+    : otherHit ? { value: otherHit.key, source: 'visitor', evidence: other }
     : moodHit ? { value: moodHit.key, source: 'visitor', evidence: moodHit.evidence }
       : { value: 'nostalgic', source: 'inferred', reason: 'No feeling was named; memories default to a soft nostalgia here.' };
 
   const childhood = /child|kid|young|little|school|grand|mother|father|mom|dad|age (\d)\b|years old/.test(all);
   const pal = choosePalette(mood.value, time.value, weather.value, childhood);
+  const secondaryMoods = chosen.slice(1);
+  if (otherHit && chosen.length && !chosen.includes(otherHit.key)) secondaryMoods.push(otherHit.key);
+  const paletteColors = blendMoods(pal.colors, secondaryMoods);
 
   // Objects
   const objects: MemoryObject[] = [];
@@ -283,11 +290,13 @@ export function interpretLocally(input: MemoryInput): MemoryProfile {
     title: makeTitle(input, environment.value, time.value),
     input,
     environment, time, weather, mood,
-    palette: { name: pal.name, colors: pal.colors, source: 'inferred', reason: `Colors chosen for ${pal.reason}.` },
+    palette: { name: pal.name, colors: paletteColors, source: 'inferred', reason: `Colors chosen for ${pal.reason}${secondaryMoods.length ? `, tinted with ${secondaryMoods.join(' and ')}` : ''}.` },
+    secondaryMoods,
+    moodWords: other || undefined,
     objects,
     sounds: soundList.slice(0, 4),
     atmosphere,
-    emotionalTone: MOOD_TONES[mood.value],
+    emotionalTone: other && !otherHit ? `“${other}”. ${MOOD_TONES[mood.value]}` : secondaryMoods.length ? `${MOOD_TONES[mood.value]} Underneath, something ${secondaryMoods.join(' and ')}.` : MOOD_TONES[mood.value],
     unclear,
     mode, variant, seed,
     interpreter: 'local',
